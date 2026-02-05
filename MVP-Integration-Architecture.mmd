@@ -1,0 +1,61 @@
+flowchart LR
+    %% --- External Systems (minimal set) ---
+    subgraph Providers
+        EHR["EHR Data via FHIR<br/>(Particle Health / Health Gorilla)"]
+        FAX["Fax/Scans<br/>(Consensus / mFax)"]
+    end
+
+    subgraph Payers
+        CLR["Clearinghouse / Payer APIs<br/>(Availity or Change Healthcare)"]
+    end
+
+    %% --- Assurlytics: Integration & Data ---
+    subgraph Saas_Integration["Assurlytics - Integration Layer"]
+        FHIRINT[FHIR Connector]
+        EDIINT["EDI/PA Connector<br/>(270/271/278/837/835)"]
+        FAXINT[Fax Intake]
+        OCR["OCR & Clinical Text Extractor<br/>(Azure/GCP/AWS)"]
+        APIGW["Unified API Gateway<br/>(REST/GraphQL)"]
+    end
+
+    subgraph Data["Assurlytics - Data Layer"]
+        DATALAKE["(Encrypted PHI Score)"]
+        VECTOR["(vector DB: Policies/CMS/Guidelines)"]
+        POLICYREG["Policy-as-Code (v1)"]
+        LEDGER["(Append-only Audit Log)"] 
+    end
+
+
+    %% -- Assurlytics: AI & Decisioning ---
+    subgraph AI["Assurlytics - AI & Decisioning (MVP)"]
+        RULES["Rule Engine v1<br/>(required evidence, hard checks)"]
+        RAG["LLM + RAG (grounded)<br/>with citations -> policy IDs"]
+        CLF[Simple ML v1<br/>Calibrated Logistic Regression<br/>Approval Probability]
+        EXPL["Explanation Builder</br>(rules + citations + factors)"] 
+    end
+
+    %% -- Assurlytics: UX ---
+    subgraph UX["Assurlytics - MVP Apps"]
+        REVIEWER["Reviewer Workbench<br/>(Payer/TPA)"]
+        PROVPORT[Provider Mini-Portal<br/>Pre-check + Upload]
+        COPILOT[AI Copilot v1<br/>Q&A + Drafts]
+        AUDIT["Audit Export<br/>(PDF/JSON)"]
+    end
+
+    %% --- Flows ---
+    EHR -->FHIRINT --> DATALAKE
+    FAX --> FAXINT --> OCR --> DATALAKE
+
+    CLR --> EDIINT --> DATALAKE
+    EDIINT --> POLICYREG
+    POLICYREG --> VECTOR
+
+    DATALAKE --> RULES
+    DATALAKE -- CLF
+    VECTOR --> RAG
+    DATALAKE --> LEDGER
+
+    EXPL --> APIGW --> REVIEWER
+    EXPL --> APIGW --> PROVPORT
+    APIGW --> COPILOT
+    LEDGER -->AUDIT

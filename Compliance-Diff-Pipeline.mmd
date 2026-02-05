@@ -1,0 +1,8 @@
+flowchart LR
+    POLSRC[Policy Update Source] --> INGEST[Ingest & Segment]
+    INGEST --> NLP[Normalize + Extract Criteria]
+    NLP --> DIFF[Compare to prior Version]
+    DIFF --> IMPACT[Impact Analysis on Rules/Prompts/Models]
+    IMPACT --> REBUILD[Auto-Regenerate Rules/Prompts]
+    REBUILD --> TEST[Regression & Safety Tests]
+    TEST --> PUBLISH["Publish Policy-as-Code v(N+1)"]

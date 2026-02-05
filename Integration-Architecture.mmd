@@ -1,0 +1,92 @@
+flowchart LR
+
+    %% === External Systems ====
+    subgraph ProviderSide["Provider Systems"]
+        EHR["EHRs via FHIR API<br/>(Practicle Health / Health Gorilla)"]
+        PFAX["Provider Fax/Scans <br/>(Consensus / mFax)"]
+    end
+
+    subgraph PayerSide["Payer Systems"]
+        PAYERP["Payer PA, Claims, Eligibility APIs<br/>(Availity / Change Healthcare)"]
+        PBM["Pharmacy PA, Claims, Eligibility APIs<br/>(Availity / Change Healthcare)"]
+    end
+
+    %% === Integration Layer ====
+    subgraph Integration["Integration Layer (Assurlytics)"]
+        FHIRINT[FHIR Integration Service]
+        EDIINT["EDI Integration Service<br/>(270/271/278/837/835)"]
+        FAXINT[Fax⟶ OCR ⟶ Text Pipeline]
+        OCR["OCR & Clinical Extraction<br/>(AWS Textract / Azure From Recognizer)"]
+        APIHUB["Unified API Gateway<br/>(REST/GRAPHQL)"]
+    end
+
+    %% === Data Layer ====
+    subgraph DataLayer["Data & Storage Layer"]
+        DATALAKE["(Encrypted PHI Data Lake)"]
+        VECTTOR["(Vector Store for Policies/Docs)"]
+        POLICYREG[Policy-as-code Registry] 
+    end
+
+    %% === AI Layer ====
+    subgraph AIEngine["AI Engine (Decisioning & Explainability)"]
+        RULES["Rule Engine<br/>(Payer Policies + CMS)"]
+        RAG[LLM + RAG ENGINE<br/>Grounded w/ Citations]
+        CLF[Predictive Models<br/>Approval Probability, TAT, Denial Reasons]
+        FWA[Anomaly/FWA Detection]
+        EXPL["Explainability Service<br/>(Rules + SHAP + Citations)"] 
+    end
+
+     %% === App Layer ====
+    subgraph AppUX["Application Layer"]
+        REVIEWER[Reviewer Workbench]
+        PROVIDERPORT[Provider Portal<br/>PA Prep + Checklist]
+        COPILOT["AI COPILOT<br/>(Q&A, drafting, validation)"]
+        DASH[Ops Dashboard]
+        AUDIT["Audit Export<br/>(PDF/JSON)"] 
+    end
+
+     %% === User Roles ====
+    subgraph Users["End Users"]
+        PayerUser[Payer UM Teams]
+        TPAUser[TPA Analysts]
+        ProvUser[Provider Staff]
+    end
+
+     %% === Data Flows ====
+
+     %% Provider  ⟶ SaaS
+     EHR --> FHIRINT
+     PFAX --> FAXINT --> OCR --> DATALAKE
+
+     %% Payer  ⟶ SaaS
+     PAYERP --> EDIINT
+     PBM --> EDIINT
+
+     %% Integration  ⟶ Data
+     FHIRINT --> DATALAKE
+     EDIINT --> DATALAKE
+     EDIINT --> POLICYREG
+     POLICYREG --> VECTTOR
+
+     %% AI Engine Connects to Data
+     DATALAKE --> RULES
+     VECTTOR --> RAG
+     DATALAKE --> RAG
+     DATALAKE --> CLF
+     DATALAKE --> FWA
+     
+     RULES --> EXPL
+     RAG --> EXPL
+     CLF --> EXPL
+     FWA --> EXPL
+
+     %% App Layer ⟶ Users
+     EXPL --> APIHUB --> REVIEWER
+     EXPL --> APIHUB --> PROVIDERPORT
+     EXPL --> APIHUB --> COPILOT
+     APIHUB --> DASH
+     EXPL --> AUDIT
+
+     REVIEWER --> PayerUser
+     TPAUser --> REVIEWER
+     ProvUser --> PROVIDERPORT

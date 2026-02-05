@@ -1,0 +1,64 @@
+%% Mermaid - AI Architecture (Flowchart)
+flowchart LR
+    %% Core Layers
+    subgraph Ingestion ["Data Ingestion & Interop"]
+        FHIR[HL7 FHIR APIs]
+        EDI[EDI 278/275/835/837]
+        NCPDP[NCPDP / Pharmacy PA]
+        DOCS[Docs: PDFs, Faxes, Images]
+        POLICIES[Payer Policies + CMS Text]
+    end
+    subgraph Processing ["Normalization & Storage"]
+        ETL[ETL +OCR + De-ID]
+        METADATA[Metadata/ICD/CPT Normalizers]
+        DATALAKE["(Encrypted PHI Data Lake)"]
+        VECTOR["(Vector Store - Policies & Guidelines)"]
+        POLICYREG["Policy-as-Code Registry (versioned)"]
+    end
+    subgraph Decisioning ["Decisioning & AI"]
+        RULES["Deterministic Rule Engine<br/>(eligibility,  evidence requirements)"]
+        RAG["LLM + RAG Service<br/> (grounded answers with citations)"]
+        CLF[Tabular ML: Approval Probability, TAT Forecast, Denial Reasons]
+        FWA["Anomaly/FWA Signals (unsupervised/graph later)"]
+        EXPLAIN["Explanation Service<br/> (rules +SHAP +citations)"]
+    end
+    subgraph Governance ["Compliance, Audit & Ops"]
+        LEDGER["(Append-only Decision Ledger)"]
+        MODELREG["Model Registry (versioning, drift, bias)"]
+        MON[Monitoring & Alerts]
+    end
+    subgraph Experience ["APIs & UX"]
+       API[REST/GRAPHQL + FHIR APIs]
+       REVIEWER[Reviewer Workbench]
+       PROVIDER[Provider Widget/Portal]
+       COPILOT[Provider Widget/Portal]
+       EXPORT["Audit Packet Export (PDF/JSON)"]
+       DASH[Ops Dashboards]
+    end
+
+    %%Flows
+    FHIR --> ETL
+    EDI --> ETL
+    NCPDP --> ETL
+    DOCS --> ETL
+    POLICIES -->POLICYREG
+    POLICYREG --> VECTOR
+    ETL --> METADATA --> DATALAKE
+    DATALAKE --> RAG
+    VECTOR --> RAG
+    POLICYREG --> RULES
+    RAG --> EXPLAIN
+    RULES --> EXPLAIN
+    DATALAKE --> CLF --> EXPLAIN
+    DATALAKE --> FWA --> EXPLAIN
+    EXPLAIN --> LEDGER
+    RULES --> LEDGER
+    CLF --> LEDGER
+    POLICYREG --> LEDGER
+    LEDGER --> EXPORT
+    API --> REVIEWER
+    API --> PROVIDER
+    API --> COPILOT
+    API --> DASH
+    EXPLAIN --> API
+    

@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    participant Prov as Provider System
+    participant Intake as Intake Service
+    participant Rules as Rule Engine
+    participant RAG as RAG Service
+    participant CLF as Predictive Model
+    participant Fuse as Fusion
+    participant Expl as Explanation Builder
+    participant Rev as Reviewer App
+    participant Ledger as Decision Ledger
+
+    Prov->>Intake: Submit PA + clinical docs
+    Intake->>Rules: Evaluate policy criteria(vX.Y)
+    Intake->>RAG: Retrieve policy snippets + draft necessity
+    Intake->>CLF: Predict approval probability
+    Rules-->>Fuse: rule hits/misses
+    RAG-->>Fuse: grounded rationale w/ citations
+    CLF-->>Fuse: score + top factors
+    Fuse-->Expl: composite decision context
+    Expl-->>Rev: Explanation Packet + checklist
+    Rev->>Ledger: Store packet (inputs/models/policy versions)

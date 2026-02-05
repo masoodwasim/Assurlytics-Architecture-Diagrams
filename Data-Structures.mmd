@@ -1,0 +1,38 @@
+classDiagram
+    class PolicyAsCode{
+        +policy_id: string
+        +version: string
+        +jurisdiction: string
+        +criteria[]: Criterion
+        +effective_date: date
+        +supersedes: string 
+    }
+    class Criterion{
+        +id: string
+        +text: string
+        +evidence_type: enum
+        +operators: enum[]
+        +thresholds: map
+        +required: bool
+    }
+    class MedicalNecessityMatrix{
+        +case_id: string
+        +criteria_status: map["present,missing,unknown"]
+        +supporting_refs: map["criterion_id -> source[]"]
+
+    }
+    class ExplanationPacket{
+        +case_id: string
+        +rule_hits: map
+        +rule_misses: map
+        +retrieved_snippets: list
+        +model_scores: map
+        +feature_importance: map
+        +natural_language_rationale: string
+        +policy_version: string
+        +model_version: string
+        +timestamps: map
+    }
+    PolicyAsCode --> Criterion
+    MedicalNecessityMatrix --> PolicyAsCode
+    ExplanationPacket --> PolicyAsCode

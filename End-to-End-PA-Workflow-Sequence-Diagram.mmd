@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    participant Prov as Provider System
+    participant Intake as Intake/Interop Service
+    participant Rules as Rule Engine
+    participant RAG as LLM + RAG
+    participant ML as Predictive Models
+    participant Expl as Explanation Service
+    participant Rev as Human Reviewer
+    participant Ledger as Audit Ledger
+    participant Payer as Payer Determination API
+
+    Prov->> Intake: Submit PA (FHR/EDI + Docs)
+    Intake->>Rules: Validate required evidence
+    Rules-->>Intake: Missing items checklist (if any)
+    Intake->>RAG: Retrieve policies & draft necessity narrative
+    Intake-->ML: Predict approval probability & TAT
+    RAG-->>Expl: Citations + rationale
+    ML-->>Expl: Feature importance (SHAP) + scores
+    Rules-->>Expl: Rule hits/misses + policy refs
+    Expl->>Rev: Package = rationale + citations + checklist
+    Rev->>Payer: Submit final PA
+    Payer-->>Rev: Determination (approve/deny)
+    Rev->>Ledger: Store inputs, outputs, explanations, versions
+    alt Denied
+        Rev->>RAG: Generate appeal letter ( grounded + citations)
+        RAG-->>Rev: Appeal draft
+        Rev->>Payer: File appeal
+        Rev->>Ledger: Log appeal artifacts
+    end

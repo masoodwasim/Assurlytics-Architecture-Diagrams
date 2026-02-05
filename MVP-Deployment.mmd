@@ -1,0 +1,39 @@
+graph TD
+    subgraph Cloud["Assurlytics Cloud (HIPAA-ready)"]
+        subgraph Edge
+            WAF[WAF/CDN] --> APIGW[API Gateway]
+        end
+
+        subgraph AppServices["App Services"]
+            WEB["Web App (Reviewer/Provider/Copilot)"]
+            AUTH[IdP/OIDC + RBAC]
+            INT["Integration Service<br/>(FHIR/EDI/Fax APIs)"]
+            RULES[Rules v1 Service]
+            LLM[LLM+RAG Service]
+            ML[ML v1 Service]
+            AUD[Audit Export Service]
+            MON[Monitoring & Logs] 
+        end
+
+        subgraph Data["Data Stores"]
+            DB["(PHI DB /S3)"]
+            VEC["(Vector DB)"]
+            LEDGER["(Audit Ledger)"]
+            SECRETS[Secrets Manager]
+        end
+    end
+
+    APIGW --> WEB
+    WEB--> AUTH
+    WEB --> INT
+    INT --> RULES
+    INT --> ML
+    INT --> LLM
+    RULES--> DB
+    LLM--> VEC
+    INT--> DB
+    WEB--> AUD
+    AUD--> LEDGER
+    MON --> AppServices
+    SECRETS --> AppServices
+

@@ -1,0 +1,6 @@
+flowchart LR
+    PA[PA Events] --> FEATURES
+    CLAIMS[Claims/Remits] --> FEATURES
+    PROVIDER[Povider behavior] --> FEATURES
+    FEATURES[Feature Builder] --> ANOM[Anomaly/FWA Models]--> FLAGS[Investigation Flags]
+    FLAGS --> LEDGER["Explainable Evidence Trail)"]

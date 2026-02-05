@@ -1,0 +1,59 @@
+flowchart LR
+    subgraph Ingestion
+        FHIR["Clinical Data (FHIR)"]
+        DOCS[Docs/Fax OCR]
+        CLAIMS[EDI/PA Feeds]
+        POL[Policies/Regulations]
+    end
+
+    subgraph Knowledge
+        REG["Policy-as-Code Registry (versioned)"]
+        VEC["vector Store (policy/guideline chunks)"] 
+    end
+
+    subgraph Decisioning
+        RULES[Deterministic Rule Engine]
+        RAG["LLM + RAG (with citations)"]
+        CLF["Predictive Models (approval/TAT/denial)"]
+        FUSE[Decision Fusion + Confidence]
+        EXPL[Explanation Builder]
+    end
+
+    subgraph Governance
+        LEDGER[Immutable Decision Ledger]
+        MON[Monitoring/Drift/Bias]
+    end
+
+    subgraph Apps
+        REVIEW[Reviewer Workbench]
+        PROVIDER[Provider Portal]
+        APPEAL[Appeal Generator]
+        API[APIs]
+    end
+
+    FHIR --> REG
+    DOCS --> REG
+    CLAIMS--> REG
+    POL--> REG --> VEC
+
+    FHIR --> RULES
+    DOCS --> RULES
+    REG --> RULES
+
+    VEC --> RAG
+    FHIR --> RAG
+    DOCS --> RAG
+
+    FHIR --> CLF
+    DOCS --> CLF
+    CLAIMS --> CLF
+
+    RULES --> FUSE
+    RAG --> FUSE
+    CLF --> FUSE --> EXPL --> LEDGER
+
+    EXPL --> REVIEW
+    EXPL --> PROVIDER
+    EXPL --> APPEAL
+    EXPL --> API
+    LEDGER --> MON

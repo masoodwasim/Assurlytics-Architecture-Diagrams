@@ -1,0 +1,38 @@
+sequenceDiagram
+    autonumber
+    participant Provider as Provider Portal (MVP)
+    participant FHIR as FHIR Connector
+    participant CLR as Clearinghouse/Payer API
+    participant INT as Integration Layer
+    participant DATA as PHI Store + vector DB
+    participant RULES as Rules v1
+    participant RAG as LLM+RAG (grounded)
+    participant CLF as ML v1(Approval Prob)
+    participant EXPL as Explanation Builder
+    participant Rev as Reviewer Workbench
+    participant Ledger as Audit Log
+
+    Provider->> FHIR: Pull clinical context(FHIR)
+    FHIR-->>DATA: Store curated data 
+    Provider->>INT: Submit PA + attachments (fax⟶OCR if needed)
+    INT->>DATA: Normalize + store payload
+
+    INT->>RULES: Check required evidence vs policy v1
+    INT->>CLF: Predict approval probability
+    INT->>DATA: Normalize + store payload
+
+    RULES-->>EXPL: Rule hits/misses = policy refs 
+    CLF-->>EXPL: Score + top features (simple factors)
+    RAG-->>EXPL: Narrative + citations
+    EXPL-->>Rev: Package: rationale + checklist + scrore
+
+    Rev-->>CLR: Submit to payer via Clearinghouse API
+    CLR-->>Rev: Determination (approve/deny)
+    Rev->>Ledger: Log inputs/outputs/explanations (exportable)
+
+    alt Denied
+        Rev->>RAG: Generate appeal letter ( grounded)
+        RAG-->>Rev: Appeal draft (with citations)
+        Rev->>CLR: File appeal
+        Rev->>Ledger: Log appeal artifacts
+    end
